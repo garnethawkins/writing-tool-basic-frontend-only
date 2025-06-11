@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Help Book Creator</title>
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for a clean look */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Basic styles for message box, replacing alert() */
+        #messageBox {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 2px solid #0056b3;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        #messageBox button {
+            background-color: #0056b3;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* Styles for nav buttons */
+        .nav-button {
+            @apply px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300;
+        }
+
+        /* Styles for word count display */
+        .word-count.text-red-500 {
+            @apply font-bold;
+        }
+
+        .word-count.text-orange-500 {
+            @apply font-bold;
+        }
+
+        .word-count.text-green-600 {
+            @apply font-bold;
+        }
+
+        /* Styles for total word count display */
+        .total-word-count.bg-red-100 {
+            @apply font-bold;
+        }
+
+        .total-word-count.bg-green-100 {
+            @apply font-bold;
+        }
+
+        .total-word-count.bg-orange-100 {
+            @apply font-bold;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Message Box for user feedback (replaces alert()) -->
+    <div id="messageBox" class="p-6 rounded-lg shadow-xl bg-white border border-blue-500">
+        <p id="messageText" class="text-lg mb-4 text-blue-800"></p>
+        <button id="messageBoxClose"
+            class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">OK</button>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-700 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#"
+                class="text-white text-2xl font-bold rounded-lg px-3 py-1 hover:bg-blue-600 transition duration-300"
+                onclick="app.showPage('landing-page')">Book Creator</a>
+            <div class="space-x-4">
+                <button class="nav-button" onclick="app.showPage('landing-page')">Home</button>
+                <button class="nav-button" onclick="app.showPage('chapter-planner-page')">Chapter Planner</button>
+                <button class="nav-button"
+                    onclick="app.showPage('chapter-writer-page', { chapterIndex: 0, targetWords: 2500 })">Chapter
+                    Writer</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area - All "pages" live here and are shown/hidden by JS -->
+    <main class="flex-grow container mx-auto p-6">
+
+        <!-- Landing Page -->
+        <section id="landing-page" class="page-section hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-12 rounded-xl shadow-xl text-center">
+                <h1 class="text-5xl font-extrabold mb-6">Welcome to Your Book Creation Hub!</h1>
+                <p class="text-xl mb-8">
+                    Craft your self-help masterpiece with ease. Plan your chapters, write your content, and track your
+                    progress.
+                </p>
+                <div class="space-x-4">
+                    <button
+                        class="px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg shadow-md hover:bg-gray-200 transition duration-300 text-lg"
+                        onclick="app.showPage('chapter-planner-page')">
+                        Start Planning Chapters
+                    </button>
+                    <button
+                        class="px-8 py-3 bg-blue-900 text-white font-semibold rounded-lg shadow-md hover:bg-blue-800 transition duration-300 text-lg"
+                        onclick="app.showPage('chapter-writer-page', { chapterIndex: 0, targetWords: 2500 })">
+                        Jump to Chapter Writer
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mt-12">
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-blue-200">
+                    <h2 class="text-3xl font-bold text-blue-700 mb-4">Plan Your Book</h2>
+                    <p class="text-gray-700 mb-4">
+                        Structure your entire book, define parts, and estimate word counts for each chapter based on
+                        your desired total page count.
+                    </p>
+                    <ul class="list-disc list-inside text-gray-600 mb-6">
+                        <li>Dynamic word count estimations</li>
+                        <li>Add and manage chapters</li>
+                        <li>Organize into parts</li>
+                    </ul>
+                    <button
+                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+                        onclick="app.showPage('chapter-planner-page')">
+                        Go to Planner
+                    </button>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg border border-blue-200">
+                    <h2 class="text-3xl font-bold text-blue-700 mb-4">Write Your Chapters</h2>
+                    <p class="text-gray-700 mb-4">
+                        Dive deep into writing each chapter with structured sections and real-time word count feedback,
+                        tailored to your plan.
+                    </p>
+                    <ul class="list-disc list-inside text-gray-600 mb-6">
+                        <li>Structured writing sections</li>
+                        <li>Live word count tracking</li>
+                        <li>Guidance on section proportions</li>
+                    </ul>
+                    <button
+                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+                        onclick="app.showPage('chapter-writer-page', { chapterIndex: 0, targetWords: 2500 })">
+                        Start Writing
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter Planner Page -->
+        <section id="chapter-planner-page" class="page-section hidden p-4">
+            <h1 class="text-4xl font-extrabold text-blue-800 mb-6">Self-Help Book Chapter Planner</h1>
+            <p class="text-lg text-gray-700 mb-8">
+                Plan your book's structure by defining its total page count and outlining each chapter. Word counts for
+                each chapter will be automatically calculated.
+            </p>
+
+            <div class="bg-blue-50 p-6 rounded-xl shadow-inner mb-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div>
+                    <label for="bookPageCount" class="block text-blue-800 text-xl font-bold mb-2">Desired Total Book
+                        Page Count:</label>
+                    <input type="number" id="bookPageCount" value="200" min="50" step="10"
+                        class="w-full p-3 border border-blue-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                    <p class="text-gray-600 text-sm mt-2"><em>(Based on ~250 words per page for non-fiction)</em></p>
+                </div>
+                <div id="calculatedBookInfo"
+                    class="total-info-box text-2xl font-bold text-center p-5 border-2 border-blue-500 rounded-lg bg-blue-100 text-blue-800">
+                    Calculated Total Book Words: 0
+                </div>
+            </div>
+
+            <div id="chapterContainer">
+                <!-- Chapters will be dynamically loaded here by JavaScript -->
+            </div>
+
+            <button type="button" id="addChapterBtn"
+                class="block mx-auto mt-8 px-8 py-3 bg-green-600 text-white text-xl font-semibold rounded-lg shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105">
+                Add Another Chapter
+            </button>
+        </section>
+
+        <!-- Chapter Writer Page -->
+        <section id="chapter-writer-page" class="page-section hidden p-4">
+            <h1 class="text-4xl font-extrabold text-blue-800 mb-6">Self-Help Chapter Creator</h1>
+            <p class="text-lg text-gray-700 mb-8">
+                Use this tool to structure and write your self-help book chapter.
+                <span id="writerPageTargetWordsDisplay" class="font-bold text-blue-700"></span>
+            </p>
+
+            <div id="totalWordCountDisplay"
+                class="total-word-count text-2xl font-bold text-center p-5 border-2 border-blue-500 rounded-lg bg-blue-100 text-blue-800 mb-8">
+                Total Chapter Word Count: 0 words (Target: 0-0 words)
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">Chapter Title</h2>
+                <textarea id="chapterTitleWriter" rows="1" placeholder="Enter your chapter title here..."
+                    class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm"></textarea>
+            </div>
+
+            <!-- Chapter Segments -->
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">1. Introduction <br><small
+                        class="text-base text-gray-500">(Approx. 5-10% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Hook: Relatable anecdote, statistic, or question.</li>
+                    <li>Acknowledge reader's pain/struggle.</li>
+                    <li>State what the reader will gain (the promise).</li>
+                    <li>Outline key areas/steps.</li>
+                </ul>
+                <textarea id="intro"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Start writing your introduction..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="introCount">Words: 0 (Target: 0-0)
+                </div>
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">2. Understanding the Problem <br><small
+                        class="text-base text-gray-500">(Approx. 15-20% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Delve into root causes or common manifestations.</li>
+                    <li>Offer insights, research, or misconceptions.</li>
+                    <li>Use brief examples/scenarios.</li>
+                    <li>Self-reflection prompt.</li>
+                </ul>
+                <textarea id="problem"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Describe the problem in depth..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="problemCount">Words: 0 (Target: 0-0)
+                </div>
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">3. The Solution/Framework <br><small
+                        class="text-base text-gray-500">(Approx. 40-50% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Introduce core concept/strategy.</li>
+                    <li>Break down into actionable steps/principles.</li>
+                    <li>Use clear headings for each step.</li>
+                    <li>Provide examples and exercises.</li>
+                    <li>Include stories, analogies, or metaphors.</li>
+                </ul>
+                <textarea id="solution"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Detail your solution, step by step..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="solutionCount">Words: 0 (Target: 0-0)
+                </div>
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">4. Common Obstacles & How to Overcome Them
+                    <br><small class="text-base text-gray-500">(Approx. 10-15% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Anticipate common challenges/setbacks.</li>
+                    <li>Offer strategies/mindset shifts.</li>
+                    <li>Reassure the reader.</li>
+                </ul>
+                <textarea id="obstacles"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Address potential difficulties..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="obstaclesCount">Words: 0 (Target: 0-0)
+                </div>
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">5. Putting It All Together / Action Plan
+                    <br><small class="text-base text-gray-500">(Approx. 5-10% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Summarize key takeaways.</li>
+                    <li>Provide a clear "action plan" or "challenge."</li>
+                    <li>Encourage small, consistent steps.</li>
+                </ul>
+                <textarea id="actionPlan"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Create a concise action plan..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="actionPlanCount">Words: 0 (Target:
+                    0-0)</div>
+            </div>
+
+            <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-3">6. Chapter Conclusion <br><small
+                        class="text-base text-gray-500">(Approx. 5% of chapter)</small></h2>
+                <ul class="list-disc list-inside text-gray-600 mb-4">
+                    <li>Reiterate main promise and positive impact.</li>
+                    <li>Offer final encouraging/inspiring thought.</li>
+                    <li>Lead-in to the next chapter.</li>
+                </ul>
+                <textarea id="conclusion"
+                    class="chapter-segment w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[100px]"
+                    placeholder="Wrap up your chapter..."></textarea>
+                <div class="word-count text-right text-sm text-gray-500 mt-2" id="conclusionCount">Words: 0 (Target:
+                    0-0)</div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        // Global App State to manage pages and data
+        const app = {
+            // Configuration constants
+            WORDS_PER_PAGE: 250, // Average words per page for non-fiction
+
+            // Defines the ideal word count distribution for each chapter (as percentages of total book words)
+            // This is a *flexible* distribution and can be tweaked.
+            // It sums to 100% (or very close).
+            chapterWeightings: [
+                { id: 0, weighting: 0.08, title: "Chapter 1: The Call to Change: Why You're Here and Why Now", synopsisPlaceholder: "Introduce the problem, acknowledge struggles, promise gains, and set the stage." },
+                { id: 1, weighting: 0.10, title: "Chapter 2: Unmasking the Roots: The Psychology Behind [Topic of Learning]", synopsisPlaceholder: "Delve into common causes, triggers, and underlying beliefs. Debunk myths." },
+                { id: 2, weighting: 0.09, title: "Chapter 3: Your Current Blueprint: Identifying Your Habits & Patterns", synopsisPlaceholder: "Focus on self-awareness: identifying triggers, habits, coping mechanisms, and obstacles." },
+                { id: 3, weighting: 0.11, title: "Chapter 4: The First Steps: Building Essential [Topic] Skills", synopsisPlaceholder: "Introduce fundamental, low-barrier techniques and provide simple exercises." },
+                { id: 4, weighting: 0.12, title: "Chapter 5: Deep Dive: Advanced Strategies for [Topic] Mastery", synopsisPlaceholder: "Build on previous chapters with more sophisticated techniques, explanations, and examples." },
+                { id: 5, weighting: 0.10, title: "Chapter 6: Overcoming Internal Resistance: Mindset Shifts & Emotional Management", synopsisPlaceholder: "Address psychological barriers like self-doubt, fear, and perfectionism with coping techniques." },
+                { id: 6, weighting: 0.09, title: "Chapter 7: External Optimisation: Structuring Your Environment for Success", synopsisPlaceholder: "Focus on optimizing physical and digital environments, routines, and supportive relationships." },
+                { id: 7, weighting: 0.08, title: "Chapter 8: Navigating Setbacks & Staying the Course", synopsisPlaceholder: "Strategies for dealing with relapses, motivation dips, and quickly getting back on track." },
+                { id: 8, weighting: 0.08, title: "Chapter 9: Customizing Your Path: Adapting Strategies to Your Unique Life", synopsisPlaceholder: "Guidance on adapting strategies to individual personalities, lifestyles, and goals." },
+                { id: 9, weighting: 0.08, title: "Chapter 10: Beyond the Goal: Integrating [Topic] for Long-Term Growth", synopsisPlaceholder: "Shift focus to leveraging new skills for broader life enhancement and continuous improvement." },
+                { id: 10, weighting: 0.07, title: "Chapter 11: Your Future, Transformed: Sustaining Momentum & Impact", synopsisPlaceholder: "Concluding chapter on maintaining motivation, celebrating progress, and a final call to action." }
+            ],
+
+            // Chapter segments for the writer page with their target word percentages
+            writerSegments: [
+                { id: 'intro', countId: 'introCount', targetMin: 0.05, targetMax: 0.10, label: 'Introduction' },
+                { id: 'problem', countId: 'problemCount', targetMin: 0.15, targetMax: 0.20, label: 'Understanding the Problem' },
+                { id: 'solution', countId: 'solutionCount', targetMin: 0.40, targetMax: 0.50, label: 'The Solution/Framework' },
+                { id: 'obstacles', countId: 'obstaclesCount', targetMin: 0.10, targetMax: 0.15, label: 'Common Obstacles & How to Overcome Them' },
+                { id: 'actionPlan', countId: 'actionPlanCount', targetMin: 0.05, targetMax: 0.10, label: 'Putting It All Together / Action Plan' },
+                { id: 'conclusion', countId: 'conclusionCount', targetMin: 0.05, targetMax: 0.05, label: 'Chapter Conclusion' } // Conclusion is often tighter
+            ],
+
+            // State variables
+            chaptersData: [], // Array to hold all chapter objects
+            bookPageCount: 200,
+            currentWritingChapterIndex: null, // Index of the chapter currently being written
+            chapterWriterTargetWords: 0, // Target words for the *current* chapter in the writer
+
+            // UI elements
+            elements: {
+                bookPageCountInput: document.getElementById('bookPageCount'),
+                calculatedBookInfo: document.getElementById('calculatedBookInfo'),
+                chapterContainer: document.getElementById('chapterContainer'),
+                addChapterBtn: document.getElementById('addChapterBtn'),
+                totalWordCountDisplay: document.getElementById('totalWordCountDisplay'),
+                chapterTitleWriter: document.getElementById('chapterTitleWriter'),
+                writerPageTargetWordsDisplay: document.getElementById('writerPageTargetWordsDisplay'),
+                messageBox: document.getElementById('messageBox'),
+                messageText: document.getElementById('messageText'),
+                messageBoxClose: document.getElementById('messageBoxClose')
+            },
+
+            // --- Utility Functions ---
+
+            // Displays a custom message box instead of alert()
+            showMessage: function (message) {
+                this.elements.messageText.textContent = message;
+                this.elements.messageBox.style.display = 'block';
+            },
+
+            // Initializes the app state and listeners
+            init: function () {
+                // Initialize chaptersData based on predefined weightings
+                this.chaptersData = this.chapterWeightings.map((weighting, index) => ({
+                    id: index,
+                    title: weighting.title,
+                    synopsis: '',
+                    targetWords: 0, // Will be calculated dynamically
+                    content: { // Stores content for each segment of the writer
+                        intro: '',
+                        problem: '',
+                        solution: '',
+                        obstacles: '',
+                        actionPlan: '',
+                        conclusion: ''
+                    }
+                }));
+
+                // Set initial book page count from input
+                this.bookPageCount = parseFloat(this.elements.bookPageCountInput.value);
+
+                // Event Listeners for Chapter Planner
+                if (this.elements.bookPageCountInput) {
+                    this.elements.bookPageCountInput.addEventListener('input', () => {
+                        this.bookPageCount = parseFloat(this.elements.bookPageCountInput.value);
+                        this.calculateChapterWordCounts();
+                    });
+                }
+
+                if (this.elements.addChapterBtn) {
+                    this.elements.addChapterBtn.addEventListener('click', this.addChapter.bind(this));
+                }
+
+                // Event Listeners for Chapter Writer text areas
+                // Attach input listeners to all chapter segment textareas
+                this.writerSegments.forEach(segment => {
+                    const textarea = document.getElementById(segment.id);
+                    if (textarea) {
+                        textarea.addEventListener('input', this.updateWordCounts.bind(this));
+                    }
+                });
+
+                // Listener for the chapter title in writer (to save changes)
+                if (this.elements.chapterTitleWriter) {
+                    this.elements.chapterTitleWriter.addEventListener('input', () => {
+                        if (this.currentWritingChapterIndex !== null) {
+                            this.chaptersData[this.currentWritingChapterIndex].title = this.elements.chapterTitleWriter.value;
+                        }
+                    });
+                }
+
+                // Close message box listener
+                if (this.elements.messageBoxClose) {
+                    this.elements.messageBoxClose.addEventListener('click', () => {
+                        this.elements.messageBox.style.display = 'none';
+                    });
+                }
+
+                // Initially show the landing page
+                this.showPage('landing-page');
+            },
+
+            // --- Page Navigation ---
+
+            // Function to show/hide specific sections (pages)
+            showPage: function (pageId, params = {}) {
+                try {
+                    // Hide all pages first
+                    document.querySelectorAll('.page-section').forEach(section => {
+                        section.classList.add('hidden');
+                    });
+
+                    // Show the requested page
+                    const targetPage = document.getElementById(pageId);
+                    if (targetPage) {
+                        targetPage.classList.remove('hidden');
+                        this.currentPage = pageId;
+
+                        // Perform specific rendering based on the page
+                        if (pageId === 'chapter-planner-page') {
+                            // Only trigger calculation if the page is being rendered and data might be stale
+                            this.calculateChapterWordCounts();
+                        } else if (pageId === 'chapter-writer-page') {
+                            // Default to chapter 1 if no specific index is provided
+                            this.currentWritingChapterIndex = params.chapterIndex !== undefined ? params.chapterIndex : 0;
+                            this.chapterWriterTargetWords = params.targetWords !== undefined ? params.targetWords : 2500;
+                            this.renderChapterWriter();
+                        }
+                    } else {
+                        this.showMessage(`Error: Page with ID "${pageId}" not found.`);
+                    }
+                } catch (error) {
+                    console.error("Error showing page:", error);
+                    this.showMessage("An error occurred while loading the page.");
+                }
+            },
+
+            // --- Chapter Planner Logic ---
+
+            calculateChapterWordCounts: function () {
+                try {
+                    const desiredPages = parseFloat(this.elements.bookPageCountInput.value);
+                    if (isNaN(desiredPages) || desiredPages <= 0) {
+                        this.elements.calculatedBookInfo.textContent = "Calculated Total Book Words: Invalid Page Count";
+                        // Also clear individual chapter targets if input is invalid
+                        this.chaptersData.forEach(chapter => chapter.targetWords = 0);
+                        this.renderChapterPlanner(); // Re-render to clear targets
+                        return;
+                    }
+
+                    const totalBookWords = Math.round(desiredPages * this.WORDS_PER_PAGE);
+                    this.elements.calculatedBookInfo.textContent = `Calculated Total Book Words: ${totalBookWords} words`;
+
+                    let totalWeightedWords = 0;
+                    this.chaptersData.forEach(chapter => {
+                        const weightingObj = this.chapterWeightings.find(w => w.id === chapter.id);
+                        if (weightingObj) {
+                            chapter.targetWords = Math.round(totalBookWords * weightingObj.weighting);
+                            totalWeightedWords += chapter.targetWords;
+                        } else {
+                            // For dynamically added chapters without a specific weighting,
+                            // we'll distribute remaining words after weighted chapters are accounted for.
+                            // This part is handled by the renderChapterPlanner for display.
+                            // For now, set a placeholder and let render handle actual calculation.
+                            chapter.targetWords = 0;
+                        }
+                    });
+
+                    // Distribute any remaining words (due to rounding) among dynamic chapters
+                    const dynamicChapters = this.chaptersData.filter(c => !this.chapterWeightings.some(w => w.id === c.id));
+                    if (dynamicChapters.length > 0) {
+                        let wordsForDynamicChapters = totalBookWords - totalWeightedWords;
+                        // Avoid negative words if totalBookWords is very small
+                        wordsForDynamicChapters = Math.max(0, wordsForDynamicChapters);
+
+                        const wordsPerDynamicChapter = Math.round(wordsForDynamicChapters / dynamicChapters.length);
+                        dynamicChapters.forEach(chapter => {
+                            chapter.targetWords = wordsPerDynamicChapter;
+                        });
+                    }
+
+                    // IMPORTANT FIX: Call renderChapterPlanner AFTER calculations are complete
+                    // Avoids infinite recursion by only calling it once here.
+                    this.renderChapterPlanner();
+                } catch (error) {
+                    console.error("Error calculating chapter word counts:", error);
+                    this.showMessage("An error occurred while calculating word counts.");
+                }
+            },
+
+            // Renders/updates the Chapter Planner content
+            renderChapterPlanner: function () {
+                try {
+                    const chapterContainer = this.elements.chapterContainer;
+                    chapterContainer.innerHTML = ''; // Clear existing content
+
+                    let currentPart = null;
+                    this.chaptersData.forEach((chapter, index) => {
+                        // Check for predefined part headings (simple example: based on chapter index)
+                        let partHeading = '';
+                        if (index === 0) {
+                            partHeading = "Part 1: Laying the Foundation - Understanding the Problem & Your Starting Point";
+                        } else if (index === 3) { // After chapter 3, start Part 2
+                            partHeading = "Part 2: Core Strategies & Techniques - The 'How-To' Fundamentals";
+                        } else if (index === 7) { // After chapter 7, start Part 3
+                            partHeading = "Part 3: Advanced Application & Sustainable Success - Integrating & Thriving";
+                        }
+
+                        if (partHeading && currentPart !== partHeading) {
+                            const partDiv = document.createElement('div');
+                            partDiv.classList.add('part-heading', 'text-2xl', 'font-bold', 'text-blue-700', 'mt-10', 'mb-5', 'text-center', 'bg-blue-100', 'p-3', 'rounded-md', 'shadow-sm');
+                            partDiv.textContent = partHeading;
+                            chapterContainer.appendChild(partDiv);
+                            currentPart = partHeading;
+                        }
+
+                        const chapterDiv = document.createElement('div');
+                        chapterDiv.classList.add('chapter-section', 'bg-white', 'p-6', 'rounded-xl', 'shadow-md', 'border', 'border-gray-200', 'mb-6');
+                        chapterDiv.dataset.chapterIndex = index; // Use index as data attribute
+
+                        chapterDiv.innerHTML = `
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-2xl font-semibold text-blue-700 m-0">Chapter ${index + 1}: <span contenteditable="true" class="chapter-title-editable">${chapter.title}</span></h3>
+                                <button class="write-chapter-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 text-sm" data-chapter-index="${index}">Write Chapter</button>
+                            </div>
+                            <label for="chapter${index}Synopsis" class="block text-gray-700 font-medium mb-2">Synopsis:</label>
+                            <textarea id="chapter${index}Synopsis" rows="3" placeholder="${chapter.synopsisPlaceholder || 'Briefly outline what this chapter will cover.'}"
+                                class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[80px]">${chapter.synopsis}</textarea>
+                            <div class="word-count-display text-right text-base font-semibold text-gray-600 mt-2">Target Words: ${chapter.targetWords}</div>
+                        `;
+                        chapterContainer.appendChild(chapterDiv);
+
+                        // Attach event listener to the synopsis textarea to save changes to data
+                        const synopsisTextarea = chapterDiv.querySelector(`#chapter${index}Synopsis`);
+                        if (synopsisTextarea) {
+                            synopsisTextarea.addEventListener('input', (e) => {
+                                chapter.synopsis = e.target.value;
+                            });
+                        }
+
+                        // Attach event listener to the editable chapter title
+                        const chapterTitleEditable = chapterDiv.querySelector('.chapter-title-editable');
+                        if (chapterTitleEditable) {
+                            chapterTitleEditable.addEventListener('input', (e) => {
+                                chapter.title = e.target.textContent;
+                            });
+                        }
+
+                        // Attach event listener to "Write Chapter" button
+                        const writeBtn = chapterDiv.querySelector('.write-chapter-btn');
+                        if (writeBtn) {
+                            writeBtn.addEventListener('click', (e) => {
+                                const targetIndex = parseInt(e.target.dataset.chapterIndex);
+                                const targetWords = this.chaptersData[targetIndex].targetWords;
+                                this.showPage('chapter-writer-page', { chapterIndex: targetIndex, targetWords: targetWords });
+                            });
+                        }
+                    });
+                    // Removed the recursive call here: this.calculateChapterWordCounts();
+                    // This was the source of the "Maximum call stack size exceeded" error.
+                    // calculateChapterWordCounts already calls renderChapterPlanner.
+                } catch (error) {
+                    console.error("Error rendering chapter planner:", error);
+                    this.showMessage("An error occurred while rendering the chapter planner.");
+                }
+            },
+
+            addChapter: function () {
+                try {
+                    const newChapterId = this.chaptersData.length;
+                    this.chaptersData.push({
+                        id: newChapterId,
+                        title: `Chapter ${newChapterId + 1}: [New Chapter Title]`,
+                        synopsis: '',
+                        synopsisPlaceholder: 'Briefly outline what this new chapter will cover.',
+                        targetWords: 0, // Will be calculated
+                        content: {
+                            intro: '', problem: '', solution: '', obstacles: '', actionPlan: '', conclusion: ''
+                        }
+                    });
+                    this.calculateChapterWordCounts(); // Recalculate targets for all chapters, then re-render
+                } catch (error) {
+                    console.error("Error adding chapter:", error);
+                    this.showMessage("An error occurred while adding a new chapter.");
+                }
+            },
+
+            // --- Chapter Writer Logic ---
+
+            // Renders/updates the Chapter Writer content based on selected chapter
+            renderChapterWriter: function () {
+                try {
+                    if (this.currentWritingChapterIndex === null || !this.chaptersData[this.currentWritingChapterIndex]) {
+                        this.showMessage("Please select a chapter from the planner or start a new chapter.");
+                        this.showPage('landing-page'); // Redirect if no chapter is selected
+                        return;
+                    }
+
+                    const currentChapter = this.chaptersData[this.currentWritingChapterIndex];
+
+                    // Set chapter title
+                    this.elements.chapterTitleWriter.value = currentChapter.title;
+
+                    // Display target words for the current chapter
+                    this.chapterWriterTargetWords = currentChapter.targetWords || 2500; // Fallback to 2500 if not set
+                    this.elements.writerPageTargetWordsDisplay.textContent = `Aim for a total word count between ${Math.round(this.chapterWriterTargetWords * 0.85)} and ${Math.round(this.chapterWriterTargetWords * 1.15)} words.`; // Added buffer
+
+                    // Load content into text areas and update counts
+                    this.writerSegments.forEach(segment => {
+                        const textarea = document.getElementById(segment.id);
+                        if (textarea) {
+                            textarea.value = currentChapter.content[segment.id] || '';
+                        }
+                    });
+
+                    // Trigger initial word count update for the writer page
+                    this.updateWordCounts();
+                } catch (error) {
+                    console.error("Error rendering chapter writer:", error);
+                    this.showMessage("An error occurred while loading the chapter writer.");
+                }
+            },
+
+            // Updates word counts for segments and total chapter in writer
+            updateWordCounts: function () {
+                try {
+                    let totalWords = 0;
+                    const currentChapter = this.chaptersData[this.currentWritingChapterIndex];
+
+                    if (!currentChapter) {
+                        console.warn("No current chapter selected for word count update.");
+                        return;
+                    }
+
+                    this.writerSegments.forEach(segment => {
+                        const textarea = document.getElementById(segment.id);
+                        const countDisplay = document.getElementById(segment.countId);
+
+                        if (textarea && countDisplay) {
+                            const currentWords = this.getWordCount(textarea.value);
+                            totalWords += currentWords;
+
+                            // Save content back to appState immediately
+                            currentChapter.content[segment.id] = textarea.value;
+
+                            // Calculate target range for this segment based on the overall chapter target
+                            const segmentTargetMinWords = Math.round(this.chapterWriterTargetWords * segment.targetMin);
+                            const segmentTargetMaxWords = Math.round(this.chapterWriterTargetWords * segment.targetMax);
+
+                            countDisplay.textContent = `Words: ${currentWords} (Target: ${segmentTargetMinWords}-${segmentTargetMaxWords})`;
+                            countDisplay.classList.remove('text-orange-500', 'text-green-600', 'text-red-500'); // Tailwind classes
+
+                            if (currentWords < segmentTargetMinWords) {
+                                countDisplay.classList.add('text-red-500'); // Danger
+                            } else if (currentWords > segmentTargetMaxWords) {
+                                countDisplay.classList.add('text-orange-500'); // Warning
+                            } else {
+                                countDisplay.classList.add('text-green-600'); // Success
+                            }
+                        }
+                    });
+
+                    // Update total chapter word count display
+                    const totalWordCountDisplay = this.elements.totalWordCountDisplay;
+
+                    // Define acceptable ranges for the total chapter
+                    const MIN_TOTAL_WORDS = Math.round(this.chapterWriterTargetWords * 0.90); // 90% of target
+                    const SWEET_SPOT_TOTAL_WORDS = this.chapterWriterTargetWords;
+                    const MAX_TOTAL_WORDS = Math.round(this.chapterWriterTargetWords * 1.10); // 110% of target
+
+                    totalWordCountDisplay.textContent = `Total Chapter Word Count: ${totalWords} words (Target: ${MIN_TOTAL_WORDS}-${MAX_TOTAL_WORDS} words)`;
+                    totalWordCountDisplay.classList.remove('bg-orange-100', 'bg-green-100', 'bg-red-100'); // Tailwind classes
+
+                    if (totalWords < MIN_TOTAL_WORDS) {
+                        totalWordCountDisplay.classList.add('bg-red-100', 'text-red-800', 'border-red-500'); // Danger
+                    } else if (totalWords >= MIN_TOTAL_WORDS && totalWords <= MAX_TOTAL_WORDS) {
+                        totalWordCountDisplay.classList.add('bg-green-100', 'text-green-800', 'border-green-500'); // Success or Warning (within range)
+                    } else if (totalWords > MAX_TOTAL_WORDS) {
+                        totalWordCountDisplay.classList.add('bg-orange-100', 'text-orange-800', 'border-orange-500'); // Over target
+                    }
+                } catch (error) {
+                    console.error("Error updating word counts:", error);
+                    this.showMessage("An error occurred while updating word counts.");
+                }
+            },
+
+            getWordCount: function (text) {
+                if (!text) return 0;
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                return words.length;
+            }
+        };
+
+        // Initialize the application once the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+
+</html>
