@@ -264,7 +264,8 @@
 
             <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
                 <h2 class="text-2xl font-semibold text-blue-700 mb-3">4. Common Obstacles & How to Overcome Them
-                    <br><small class="text-base text-gray-500">(Approx. 10-15% of chapter)</small></h2>
+                    <br><small class="text-base text-gray-500">(Approx. 10-15% of chapter)</small>
+                </h2>
                 <ul class="list-disc list-inside text-gray-600 mb-4">
                     <li>Anticipate common challenges/setbacks.</li>
                     <li>Offer strategies/mindset shifts.</li>
@@ -279,7 +280,8 @@
 
             <div class="chapter-section bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-6">
                 <h2 class="text-2xl font-semibold text-blue-700 mb-3">5. Putting It All Together / Action Plan
-                    <br><small class="text-base text-gray-500">(Approx. 5-10% of chapter)</small></h2>
+                    <br><small class="text-base text-gray-500">(Approx. 5-10% of chapter)</small>
+                </h2>
                 <ul class="list-disc list-inside text-gray-600 mb-4">
                     <li>Summarize key takeaways.</li>
                     <li>Provide a clear "action plan" or "challenge."</li>
@@ -316,6 +318,7 @@
         const app = {
             // Configuration constants
             WORDS_PER_PAGE: 250, // Average words per page for non-fiction
+            LOCAL_STORAGE_KEY: 'selfHelpBookCreatorData', // Key for localStorage
 
             // Defines the ideal word count distribution for each chapter (as percentages of total book words)
             // This is a *flexible* distribution and can be tweaked.
@@ -372,32 +375,104 @@
                 this.elements.messageBox.style.display = 'block';
             },
 
+            // Saves the current application state to localStorage
+            saveState: function () {
+                try {
+                    const stateToSave = {
+                        chaptersData: this.chaptersData,
+                        bookPageCount: this.bookPageCount
+                    };
+                    localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+                    console.log("App state saved to localStorage.");
+                } catch (error) {
+                    console.error("Error saving state to localStorage:", error);
+                    // Optionally show a message to the user, but not crucial for every save
+                }
+            },
+
+            // Loads application state from localStorage
+            loadState: function () {
+                try {
+                    const savedState = localStorage.getItem(this.LOCAL_STORAGE_KEY);
+                    if (savedState) {
+                        const parsedState = JSON.parse(savedState);
+                        this.chaptersData = parsedState.chaptersData || [];
+                        this.bookPageCount = parsedState.bookPageCount || 200;
+
+                        // Ensure that if loaded chaptersData is empty, we re-initialize with default weightings
+                        if (this.chaptersData.length === 0) {
+                            this.chaptersData = this.chapterWeightings.map((weighting, index) => ({
+                                id: index,
+                                title: weighting.title,
+                                synopsis: '',
+                                targetWords: 0,
+                                content: {
+                                    intro: '', problem: '', solution: '', obstacles: '', actionPlan: '', conclusion: ''
+                                }
+                            }));
+                        } else {
+                            // Merge loaded data with default structure if necessary (e.g., new segments added)
+                            this.chaptersData.forEach(chapter => {
+                                if (!chapter.content) {
+                                    chapter.content = { intro: '', problem: '', solution: '', obstacles: '', actionPlan: '', conclusion: '' };
+                                }
+                                // Ensure any new segments from writerSegments are added to existing chapters' content
+                                this.writerSegments.forEach(segment => {
+                                    if (chapter.content[segment.id] === undefined) {
+                                        chapter.content[segment.id] = '';
+                                    }
+                                });
+                            });
+                        }
+
+                        // Update the book page count input with the loaded value
+                        if (this.elements.bookPageCountInput) {
+                            this.elements.bookPageCountInput.value = this.bookPageCount;
+                        }
+                        console.log("App state loaded from localStorage.");
+                        return true; // State loaded successfully
+                    }
+                } catch (error) {
+                    console.error("Error loading state from localStorage:", error);
+                    // If parsing fails, it's likely corrupt data, so clear it
+                    localStorage.removeItem(this.LOCAL_STORAGE_KEY);
+                    this.showMessage("Corrupted saved data found. Starting with a fresh state.");
+                }
+                return false; // State not loaded or error occurred
+            },
+
             // Initializes the app state and listeners
             init: function () {
-                // Initialize chaptersData based on predefined weightings
-                this.chaptersData = this.chapterWeightings.map((weighting, index) => ({
-                    id: index,
-                    title: weighting.title,
-                    synopsis: '',
-                    targetWords: 0, // Will be calculated dynamically
-                    content: { // Stores content for each segment of the writer
-                        intro: '',
-                        problem: '',
-                        solution: '',
-                        obstacles: '',
-                        actionPlan: '',
-                        conclusion: ''
-                    }
-                }));
+                // Try to load state first
+                const stateLoaded = this.loadState();
 
-                // Set initial book page count from input
-                this.bookPageCount = parseFloat(this.elements.bookPageCountInput.value);
+                // If no state was loaded, initialize with default data
+                if (!stateLoaded || this.chaptersData.length === 0) {
+                    this.chaptersData = this.chapterWeightings.map((weighting, index) => ({
+                        id: index,
+                        title: weighting.title,
+                        synopsis: '',
+                        targetWords: 0, // Will be calculated dynamically
+                        content: { // Stores content for each segment of the writer
+                            intro: '',
+                            problem: '',
+                            solution: '',
+                            obstacles: '',
+                            actionPlan: '',
+                            conclusion: ''
+                        }
+                    }));
+                    // Set initial book page count from input if no state was loaded
+                    this.bookPageCount = parseFloat(this.elements.bookPageCountInput.value);
+                }
+
 
                 // Event Listeners for Chapter Planner
                 if (this.elements.bookPageCountInput) {
                     this.elements.bookPageCountInput.addEventListener('input', () => {
                         this.bookPageCount = parseFloat(this.elements.bookPageCountInput.value);
                         this.calculateChapterWordCounts();
+                        this.saveState(); // Save state on page count change
                     });
                 }
 
@@ -410,7 +485,10 @@
                 this.writerSegments.forEach(segment => {
                     const textarea = document.getElementById(segment.id);
                     if (textarea) {
-                        textarea.addEventListener('input', this.updateWordCounts.bind(this));
+                        textarea.addEventListener('input', () => {
+                            this.updateWordCounts();
+                            this.saveState(); // Save state on content change
+                        });
                     }
                 });
 
@@ -419,6 +497,7 @@
                     this.elements.chapterTitleWriter.addEventListener('input', () => {
                         if (this.currentWritingChapterIndex !== null) {
                             this.chaptersData[this.currentWritingChapterIndex].title = this.elements.chapterTitleWriter.value;
+                            this.saveState(); // Save state on title change
                         }
                     });
                 }
@@ -460,6 +539,7 @@
                             this.chapterWriterTargetWords = params.targetWords !== undefined ? params.targetWords : 2500;
                             this.renderChapterWriter();
                         }
+                        this.saveState(); // Save state on page navigation
                     } else {
                         this.showMessage(`Error: Page with ID "${pageId}" not found.`);
                     }
@@ -516,6 +596,7 @@
                     // IMPORTANT FIX: Call renderChapterPlanner AFTER calculations are complete
                     // Avoids infinite recursion by only calling it once here.
                     this.renderChapterPlanner();
+                    this.saveState(); // Save state after calculations and rendering
                 } catch (error) {
                     console.error("Error calculating chapter word counts:", error);
                     this.showMessage("An error occurred while calculating word counts.");
@@ -552,13 +633,16 @@
                         chapterDiv.classList.add('chapter-section', 'bg-white', 'p-6', 'rounded-xl', 'shadow-md', 'border', 'border-gray-200', 'mb-6');
                         chapterDiv.dataset.chapterIndex = index; // Use index as data attribute
 
+                        // Provide a default synopsis placeholder if none exists
+                        const synopsisPlaceholder = chapter.synopsisPlaceholder || 'Briefly outline what this chapter will cover.';
+
                         chapterDiv.innerHTML = `
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-2xl font-semibold text-blue-700 m-0">Chapter ${index + 1}: <span contenteditable="true" class="chapter-title-editable">${chapter.title}</span></h3>
                                 <button class="write-chapter-btn px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 text-sm" data-chapter-index="${index}">Write Chapter</button>
                             </div>
                             <label for="chapter${index}Synopsis" class="block text-gray-700 font-medium mb-2">Synopsis:</label>
-                            <textarea id="chapter${index}Synopsis" rows="3" placeholder="${chapter.synopsisPlaceholder || 'Briefly outline what this chapter will cover.'}"
+                            <textarea id="chapter${index}Synopsis" rows="3" placeholder="${synopsisPlaceholder}"
                                 class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm min-h-[80px]">${chapter.synopsis}</textarea>
                             <div class="word-count-display text-right text-base font-semibold text-gray-600 mt-2">Target Words: ${chapter.targetWords}</div>
                         `;
@@ -569,6 +653,7 @@
                         if (synopsisTextarea) {
                             synopsisTextarea.addEventListener('input', (e) => {
                                 chapter.synopsis = e.target.value;
+                                this.saveState(); // Save state on synopsis change
                             });
                         }
 
@@ -577,6 +662,7 @@
                         if (chapterTitleEditable) {
                             chapterTitleEditable.addEventListener('input', (e) => {
                                 chapter.title = e.target.textContent;
+                                this.saveState(); // Save state on title change
                             });
                         }
 
@@ -590,9 +676,6 @@
                             });
                         }
                     });
-                    // Removed the recursive call here: this.calculateChapterWordCounts();
-                    // This was the source of the "Maximum call stack size exceeded" error.
-                    // calculateChapterWordCounts already calls renderChapterPlanner.
                 } catch (error) {
                     console.error("Error rendering chapter planner:", error);
                     this.showMessage("An error occurred while rendering the chapter planner.");
@@ -613,6 +696,7 @@
                         }
                     });
                     this.calculateChapterWordCounts(); // Recalculate targets for all chapters, then re-render
+                    this.saveState(); // Save state after adding a chapter
                 } catch (error) {
                     console.error("Error adding chapter:", error);
                     this.showMessage("An error occurred while adding a new chapter.");
@@ -712,6 +796,7 @@
                     } else if (totalWords > MAX_TOTAL_WORDS) {
                         totalWordCountDisplay.classList.add('bg-orange-100', 'text-orange-800', 'border-orange-500'); // Over target
                     }
+                    this.saveState(); // Save state on word count update (which means content change)
                 } catch (error) {
                     console.error("Error updating word counts:", error);
                     this.showMessage("An error occurred while updating word counts.");
